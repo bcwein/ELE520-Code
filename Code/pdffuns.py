@@ -301,3 +301,40 @@ def classifyParzen(train, test, window=0.5, delta=0.5):
         )
 
     return classpred
+
+
+def knnCLassify(train, point, k=1):
+    """Apply helper function. Used in knnCLassifier.
+
+    Args:
+        train (training dataset)
+        point (point to classify)
+        k (number of neighbors to compare with)
+
+    Returns:
+        integer: predicted class of point.
+    """
+    nearest = np.linalg.norm(
+        train.drop('class', axis=1) - point.drop('class'),
+        axis=1
+        ).argsort()[:k]
+    return (train.iloc[nearest]['class'].value_counts().index.tolist()[0])
+
+
+def knnClassifier(train, test, k=1):
+    """Classify dataset using knn method.
+
+    This functions expects a dataframe with this strict format:
+        x1,x2,...,xn feature columns and a class column.
+        Each row is one sampled datapoint.
+
+    Args:
+        train (pandas): Training set.
+        test (pandas): Test set.
+        k (int, optional): [neigbors to visit]. Defaults to 1.
+
+    Returns:
+        [series]: Predicted classes.
+    """
+    classpred = test.apply(lambda row: knnCLassify(train, row, k=k), axis=1)
+    return classpred
