@@ -241,7 +241,6 @@ def parzenND(data, h1, mgrids):
     hn = h1 / np.sqrt(N)
     hnI = np.eye(d) * hn**d
     Z = np.zeros(np.shape(mgrids[0]))
-    mu = np.mean(data, axis=1)
     mgrids = np.array(mgrids)
 
     dims = np.shape(mgrids)
