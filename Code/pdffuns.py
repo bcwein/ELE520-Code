@@ -1,10 +1,4 @@
-"""
-Python script with acollection of pdfs.
-
-Functions:
-    normal distribution 1D
-    bivariate normal distribution (2D)
-"""
+"""Python script with a collection of functions."""
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -195,32 +189,19 @@ def classifyML(training, test):
 
 
 def densityPoint(density, mgrids, vec):
-    """Find density value that are closest to a vector in meshgrid.
+    """Find density value that are closest to a vector in meshgrid."""
+    vectors = []
+    for i in range(len(mgrids)):
+        vectors.append(
+            np.array(np.unravel_index(
+                    np.abs(
+                        np.array(mgrids[i]) - vec[i]
+                    ).argmin(),
+                    np.shape(mgrids[i])
+                ))
+            )
 
-    Args:
-        density : [description]
-        X ([type]): [description]
-        Y ([type]): [description]
-        vec ([type]): [description]
-
-    Returns:
-        [type]: [description]
-    """
-    indexes = []
-
-    for i, mgrid in enumerate(mgrids):
-        indexes.append(
-            list(np.unravel_index(
-                np.abs(mgrid - vec[i]).argmin(), np.shape(mgrid)
-            ))
-        )
-
-    for li in indexes:
-        li.remove(0)
-    indexes.reverse()
-    flat_list = [item for sublist in indexes for item in sublist]
-
-    return density[tuple(flat_list)]
+    return density[tuple(np.sum(vectors, axis=0))]
 
 
 def parzenND(data, h1, mgrids):
