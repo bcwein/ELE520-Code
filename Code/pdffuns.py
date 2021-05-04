@@ -7,6 +7,8 @@ import sys
 import pdb
 from functools import reduce
 from matplotlib import colors
+import pandas as pd
+from numpy.linalg import norm
 
 
 def norm1D(my, Sgm, x):
@@ -372,7 +374,106 @@ def plot_data(lda, X, y, y_pred):
                  '*', color='yellow', markersize=15, markeredgecolor='grey')
         plt.plot(lda.means_[1][0], lda.means_[1][1],
                  '*', color='yellow', markersize=15, markeredgecolor='grey')
-    except:
+    except plotError:
         return splot
 
     return splot
+
+
+def LMS(X, y, initial_theta, threshhold=1, learning_rate=0.5):
+    """Least Mean Squares Method implementation.
+
+    Args:
+        X (Numpy Array): Dataset containing feature vector
+        y (Numpy Array): labels used for regression.
+        initial_theta (Numpy array): Initial parameters.
+        threshhold (int, optional): Defaults to 1.
+        learning_rate (float, optional): Defaults to 0.5.
+
+    Returns:
+        df (pandas dataframe): Returns table of iterations.
+    """
+    # Table to return
+    df = pd.DataFrame(
+            columns=('i', 'k', 'Theta', 'Eta', 'Condition', 'Theta*')
+        )
+    # Helper variables
+    dim = len(X)
+    # Iterator variables
+    visited = 0
+    i, itr = 0, 0
+    k = i % dim
+    # Initial theta
+    thetai = initial_theta
+    # Loop until a whole pass through X without updating theta
+    while(visited < dim):
+        visited += 1
+        condition = norm(
+            (learning_rate/(i+1)) *
+            (y[k] - np.matmul(thetai.T, X[k, :])) * X[k, :]
+        )
+
+        theta_star = np.round(
+            (learning_rate/(i+1)) *
+            (y[k] - np.matmul(thetai.T, X[k, :])) * X[k, :], 2
+            )
+
+        if condition > threshhold:
+            yi, xi = y[k], X[k, :]
+            df.loc[i] = pd.Series({'i': i+1,
+                                   'k': k+1,
+                                   'Theta': thetai,
+                                   'Eta': learning_rate/(i+1),
+                                   'Condition': condition,
+                                   'Theta*': theta_star})
+            thetai = np.round(
+                thetai + (learning_rate/(i+1)) *
+                (yi - np.matmul(thetai.T, xi)) * xi, 2
+                )
+
+            visited = 0
+            i += 1
+        itr += 1
+        k = itr % dim
+
+    df.loc[i] = pd.Series({'i': i+1,
+                           'k': k+1,
+                           'Theta': thetai,
+                           'Eta': learning_rate/(i+1),
+                           'Condition': condition,
+                           'Theta*': theta_star})
+
+    return df
+
+
+def batchPerceptron(X, y, theta, threshold, lrate):
+    chi = np.ones(len(X))*-1
+    k = 1
+    df = pd.DataFrame(
+            columns=('i', 'Theta', 'Chi', 'mu', 'New Theta', 'Misclass')
+        )
+
+    while np.linalg.norm(lrate(k)*np.sum(X[chi < 0, :], axis=0)) > threshold:
+        oldtheta = theta
+        theta = lrate(k)*np.sum(X[chi < 0, :], axis=0)
+        newtheta = oldtheta + lrate(k)*np.sum(X[chi < 0, :], axis=0)
+        oldchi = chi
+        chi = newtheta @ X.T
+        df.loc[k] = pd.Series({'i': k,
+                               'Theta': oldtheta,
+                               'Chi': oldchi,
+                               'mu': lrate(k),
+                               'New Theta': theta,
+                               'Misclass': chi})
+
+        theta = oldtheta + theta
+        k = k + 1
+
+    df.loc[k] = pd.Series({'i': k,
+                           'Theta': theta,
+                           'Chi': None,
+                           'mu': None,
+                           'New Theta': None,
+                           'Misclass': None})
+
+    return df
